@@ -12,7 +12,7 @@ import java.util.List;
 
 public class JdbcTemplate {
 
-    public void executeUpdate(String sql, PreparedStatementSetter pss) throws SQLException {
+    public void executeUpdate(String sql, PreparedStatementSetter pss){
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
@@ -21,24 +21,30 @@ public class JdbcTemplate {
             pss.setParameters(pstmt);
 
             pstmt.executeUpdate();
-        } finally {
-            if (pstmt != null) {
-                pstmt.close();
-            }
+        }catch(SQLException e) {
+            throw new DataAccessException(e);
+        }finally {
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
 
-            if (con != null) {
-                con.close();
+                if (con != null) {
+                    con.close();
+                }
+            }catch (SQLException e) {
+                throw new DataAccessException(e);
             }
         }
     }
 
 
-    public void executeUpdate(String sql, Object... parameters) throws SQLException {
+    public void executeUpdate(String sql, Object... parameters){
         PreparedStatementSetter pss = createPreparedStatementSetter(parameters);
         executeUpdate(sql, pss);
     }
 
-    public <T> T executeQuery(String sql,  RowMapper<T> rm, PreparedStatementSetter pss) throws SQLException {
+    public <T> T executeQuery(String sql,  RowMapper<T> rm, PreparedStatementSetter pss){
         List<T> list = list(sql, rm, pss);
         if(list.isEmpty()) {
             return null;
@@ -46,13 +52,13 @@ public class JdbcTemplate {
         return list.get(0);
     }
 
-    public <T> T executeQuery(String sql,  RowMapper<T> rm, Object... parameters) throws SQLException {
+    public <T> T executeQuery(String sql,  RowMapper<T> rm, Object... parameters){
         PreparedStatementSetter pss = createPreparedStatementSetter(parameters);
         return executeQuery(sql, rm, pss);
     }
 
 
-    public <T> List<T> list(String sql, RowMapper<T> rm, PreparedStatementSetter pss) throws SQLException {
+    public <T> List<T> list(String sql, RowMapper<T> rm, PreparedStatementSetter pss){
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -69,20 +75,26 @@ public class JdbcTemplate {
             }
             return list;
 
+        }catch(SQLException e) {
+            throw new DataAccessException(e);
         } finally {
-            if (rs != null) {
-                rs.close();
-            }
-            if (pstmt != null) {
-                pstmt.close();
-            }
-            if (con != null) {
-                con.close();
+            try {
+                if (rs != null) {
+                    rs.close();
+                }
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+                if (con != null) {
+                    con.close();
+                }
+            }catch(SQLException e) {
+                throw new DataAccessException(e);
             }
         }
     }
 
-    public <T> List<T> list(String sql,  RowMapper<T> rm, Object... parameters) throws SQLException {
+    public <T> List<T> list(String sql,  RowMapper<T> rm, Object... parameters){
         return list(sql, rm, createPreparedStatementSetter(parameters));
     }
 
